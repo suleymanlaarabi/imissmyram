@@ -1,0 +1,11 @@
+[unstable]
+codegen-backend = true
+
+[profile.dev.package."*"]
+codegen-backend = "llvm"
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+  "-Zshare-generics=y",
+  "-Zthreads=8"
+]

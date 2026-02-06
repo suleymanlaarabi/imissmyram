@@ -1,0 +1,17 @@
+[package]
+name = "my_editor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "*", default-features = false, features = ["ui", "dynamic_linking", "3d", "bevy_dev_tools"] }
+
+[profile.dev]
+opt-level = 0
+debug = 0
+incremental = true
+codegen-units = 256
+
+
+[profile.dev.package."*"]
+opt-level = 1
