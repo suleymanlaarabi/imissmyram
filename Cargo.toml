@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "*", default-features = false, features = ["ui", "dynamic_linking", "3d", "bevy_dev_tools"] }
+avian3d = "0.5"
 
 [profile.dev]
 opt-level = 0
