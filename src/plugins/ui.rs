@@ -7,10 +7,22 @@ pub struct GameUiPlugin;
 #[derive(Component)]
 struct PlayerCoinText;
 
+#[derive(Component)]
+pub struct CpuHealthBar;
+
+#[derive(Component)]
+struct FireRateLevelText;
+
+#[derive(Component)]
+struct DamageLevelText;
+
+#[derive(Component)]
+struct SpeedLevelText;
+
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_ui)
-            .add_systems(FixedUpdate, update_player_coin_ui);
+            .add_systems(FixedUpdate, (update_player_coin_ui, update_upgrade_levels));
     }
 }
 
@@ -20,6 +32,26 @@ fn update_player_coin_ui(
 ) {
     if let Ok(player) = player.single() {
         text.0 = format!("coins: {}", player.coins);
+    }
+}
+
+fn update_upgrade_levels(
+    player: Query<&Player, Changed<Player>>,
+    mut fire_rate_text: Single<&mut Text, With<FireRateLevelText>>,
+    mut damage_text: Single<&mut Text, (With<DamageLevelText>, Without<FireRateLevelText>)>,
+    mut speed_text: Single<
+        &mut Text,
+        (
+            With<SpeedLevelText>,
+            Without<FireRateLevelText>,
+            Without<DamageLevelText>,
+        ),
+    >,
+) {
+    if let Ok(player) = player.single() {
+        fire_rate_text.0 = format!("Fire Rate Lv{}", player.fire_rate_level);
+        damage_text.0 = format!("Damage Lv{}", player.damage_level);
+        speed_text.0 = format!("Speed Lv{}", player.speed_level);
     }
 }
 
@@ -35,17 +67,36 @@ fn spawn_ui(mut commands: Commands, asset_server: ResMut<AssetServer>) {
             ..default()
         },
         children![
-            (Node {
-                width: px(100),
-                height: px(100),
-                ..default()
-            }),
             (
-                Text::new("hey"),
-                PlayerCoinText,
                 Node {
-                    width: px(100),
-                    height: px(100),
+                    width: px(250),
+                    height: px(40),
+                    border: UiRect::all(px(4)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgb_u8(50, 50, 50)),
+                BorderColor::all(Color::srgb_u8(240, 240, 240)),
+                children![(
+                    Node {
+                        width: percent(100),
+                        height: percent(100),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb_u8(0, 200, 0)),
+                    CpuHealthBar
+                )]
+            ),
+            (
+                Text::new("coins: 0"),
+                PlayerCoinText,
+                TextFont {
+                    font_size: 20.,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    width: px(150),
+                    height: px(40),
                     ..default()
                 }
             ),
@@ -70,15 +121,29 @@ fn spawn_ui(mut commands: Commands, asset_server: ResMut<AssetServer>) {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        children![(
-                            ImageNode::new(asset_server.load("Y.png")),
-                            Node {
-                                width: px(40),
-                                height: px(40),
-                                margin: UiRect::left(px(-60)),
-                                ..default()
-                            }
-                        )]
+                        children![
+                            (
+                                ImageNode::new(asset_server.load("Y.png")),
+                                Node {
+                                    width: px(40),
+                                    height: px(40),
+                                    margin: UiRect::left(px(-60)),
+                                    ..default()
+                                }
+                            ),
+                            (
+                                Text::new("Fire Rate Lv0"),
+                                TextFont {
+                                    font_size: 10.,
+                                    ..default()
+                                },
+                                Node {
+                                    margin: UiRect::left(px(-60)),
+                                    ..default()
+                                },
+                                FireRateLevelText
+                            )
+                        ]
                     ),
                     (
                         Node {
@@ -92,22 +157,58 @@ fn spawn_ui(mut commands: Commands, asset_server: ResMut<AssetServer>) {
                         },
                         children![
                             (
-                                ImageNode::new(asset_server.load("B.png")),
                                 Node {
-                                    width: px(40),
-                                    height: px(40),
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
                                     margin: UiRect::top(px(-17)),
                                     ..default()
-                                }
+                                },
+                                children![
+                                    (
+                                        ImageNode::new(asset_server.load("X.png")),
+                                        Node {
+                                            width: px(40),
+                                            height: px(40),
+                                            ..default()
+                                        }
+                                    ),
+                                    (
+                                        Text::new("Damage Lv0"),
+                                        TextFont {
+                                            font_size: 10.,
+                                            ..default()
+                                        },
+                                        DamageLevelText
+                                    )
+                                ]
                             ),
                             (
-                                ImageNode::new(asset_server.load("B.png")),
                                 Node {
-                                    width: px(40),
-                                    height: px(40),
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
                                     margin: UiRect::bottom(px(-17)),
                                     ..default()
-                                }
+                                },
+                                children![
+                                    (
+                                        ImageNode::new(asset_server.load("B.png")),
+                                        Node {
+                                            width: px(40),
+                                            height: px(40),
+                                            ..default()
+                                        }
+                                    ),
+                                    (
+                                        Text::new("Speed Lv0"),
+                                        TextFont {
+                                            font_size: 10.,
+                                            ..default()
+                                        },
+                                        SpeedLevelText
+                                    )
+                                ]
                             ),
                         ]
                     ),
@@ -121,15 +222,28 @@ fn spawn_ui(mut commands: Commands, asset_server: ResMut<AssetServer>) {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        children![(
-                            ImageNode::new(asset_server.load("A.png")),
-                            Node {
-                                width: px(40),
-                                height: px(40),
-                                margin: UiRect::left(px(60)),
-                                ..default()
-                            }
-                        )]
+                        children![
+                            (
+                                ImageNode::new(asset_server.load("A.png")),
+                                Node {
+                                    width: px(40),
+                                    height: px(40),
+                                    margin: UiRect::left(px(60)),
+                                    ..default()
+                                }
+                            ),
+                            (
+                                Text::new("Heal CPU"),
+                                TextFont {
+                                    font_size: 10.,
+                                    ..default()
+                                },
+                                Node {
+                                    margin: UiRect::left(px(60)),
+                                    ..default()
+                                }
+                            )
+                        ]
                     )
                 ]
             )

@@ -1,8 +1,7 @@
-use avian3d::prelude::{Collider, RigidBody};
+use avian3d::prelude::Collider;
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct Gun;
+use crate::DespawnOnFinish;
 
 #[derive(Message)]
 pub struct GunShootEvent {
@@ -85,7 +84,7 @@ fn handle_shoot(
                 target: shoot.target.clone(),
             },
             Collider::cuboid(0.5, 0.5, 0.5),
-            AudioPlayer::new(bullet_audio.0.clone()),
         ));
+        commands.spawn((AudioPlayer::new(bullet_audio.0.clone()), DespawnOnFinish));
     }
 }

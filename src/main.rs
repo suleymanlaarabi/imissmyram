@@ -1,8 +1,11 @@
 use avian3d::PhysicsPlugins;
-use bevy::{dev_tools::fps_overlay::FpsOverlayPlugin, prelude::*};
+use bevy::prelude::*;
 
 use crate::plugins::{
-    enemy::EnemyPlugin, gun::GunPlugin, health::HealthPlugin, player::PlayerPlugin,
+    enemy::EnemyPlugin,
+    gun::GunPlugin,
+    health::{Health, HealthPlugin},
+    player::PlayerPlugin,
     ui::GameUiPlugin,
 };
 
@@ -19,17 +22,31 @@ fn main() {
             GameUiPlugin,
             PhysicsPlugins::default(),
             // PhysicsDebugPlugin::default(),
-            FpsOverlayPlugin::default(),
+            // FpsOverlayPlugin::default(),
         ))
         .add_systems(Startup, setup)
+        .add_systems(FixedUpdate, cleanup_sfx)
         .run();
+}
+
+#[derive(Component)]
+pub struct Cpu;
+
+#[derive(Component)]
+pub struct DespawnOnFinish;
+
+fn cleanup_sfx(mut commands: Commands, query: Query<(Entity, &AudioSink), With<DespawnOnFinish>>) {
+    for (entity, sink) in &query {
+        if sink.empty() {
+            commands.entity(entity).despawn();
+        }
+    }
 }
 
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
     commands.spawn((
         Mesh3d(meshes.add(Circle::new(4.0))),
@@ -37,6 +54,7 @@ fn setup(
         Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
     ));
 
+    commands.spawn((Cpu, Health(100.)));
     // commands.spawn((
     //     SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("Chara.glb"))),
     //     Transform::from_scale(Vec3::splat(3.)).with_translation(Vec3::ZERO),
